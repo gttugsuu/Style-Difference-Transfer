@@ -17,31 +17,32 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 
-from utility.utility import *
-from utility.vgg_network import *
+# from utility.utility import *
+from utility.utility import postp, GramMatrix, GramMSELoss, load_images, save_images, make_folders
+from utility.vgg_network import VGG
 from utility.gram_matrix_visualization import *
 #############################################################################
 # PARSER
 parser = argparse.ArgumentParser(description='A Neural Algorithm of Artistic Style')
 # Parser for style weights
-parser.add_argument('--sw1', '-sw1', type=float,  default='1',help='sw1')
-parser.add_argument('--sw2', '-sw2', type=float,  default='1',help='sw2')
-parser.add_argument('--sw3', '-sw3', type=float,  default='1',help='sw3')
-parser.add_argument('--sw4', '-sw4', type=float,  default='1',help='sw4')
-parser.add_argument('--sw5', '-sw5', type=float,  default='1',help='sw5')
+parser.add_argument('--sw1', '-sw1', type=float,  default='1', help='sw1')
+parser.add_argument('--sw2', '-sw2', type=float,  default='1', help='sw2')
+parser.add_argument('--sw3', '-sw3', type=float,  default='1', help='sw3')
+parser.add_argument('--sw4', '-sw4', type=float,  default='1', help='sw4')
+parser.add_argument('--sw5', '-sw5', type=float,  default='1', help='sw5')
 # parser for content weights
-parser.add_argument('--cw1', '-cw1', type=float,  default='0',help='cw1')
-parser.add_argument('--cw2', '-cw2', type=float,  default='0',help='cw2')
-parser.add_argument('--cw3', '-cw3', type=float,  default='0',help='cw3')
-parser.add_argument('--cw4', '-cw4', type=float,  default='0',help='cw4')
-parser.add_argument('--cw5', '-cw5', type=float,  default='0',help='cw5')
+parser.add_argument('--cw1', '-cw1', type=float,  default='0', help='cw1')
+parser.add_argument('--cw2', '-cw2', type=float,  default='0', help='cw2')
+parser.add_argument('--cw3', '-cw3', type=float,  default='0', help='cw3')
+parser.add_argument('--cw4', '-cw4', type=float,  default='0', help='cw4')
+parser.add_argument('--cw5', '-cw5', type=float,  default='0', help='cw5')
 # parser for input images paths and names
-parser.add_argument('--style_path1',  '-style_path1',  type=str, help='Path to style image 1')
-parser.add_argument('--style_path2',  '-style_path2',  type=str, help='Path to style image 2')
-parser.add_argument('--content_path', '-content_path', type=str, help='Path to content image')
-parser.add_argument('--style_name1',  '-style_name1',  type=str, help='Name of style image 1')
-parser.add_argument('--style_name2',  '-style_name2',  type=str, help='Name of style image 2')
-parser.add_argument('--content_name', '-content_name', type=str, help='Name of content image')
+parser.add_argument('--style_path1',  '-style_path1',  type=str, default="../input/style_path1", help='Path to style image 1')
+parser.add_argument('--style_path2',  '-style_path2',  type=str, default="", help='Path to style image 2')
+parser.add_argument('--content_path', '-content_path', type=str, default="", help='Path to content image')
+parser.add_argument('--style_name1',  '-style_name1',  type=str, default="", help='Name of style image 1')
+parser.add_argument('--style_name2',  '-style_name2',  type=str, default="", help='Name of style image 2')
+parser.add_argument('--content_name', '-content_name', type=str, default="", help='Name of content image')
 # parser for output path
 parser.add_argument('--output_path', '-output_path', type=str, default='../../output_from_pytorch/diff_style_transfer/', help='Path to save output files')
 
@@ -136,7 +137,7 @@ visualize_gm_all_layers(content_styles, content_image, output_path+'/gramm_conte
 
 max_iter = 3000
 show_iter = 100
-optimizer = optim.LBFGS([opt_img]);
+optimizer = optim.LBFGS([opt_img])
 n_iter=[0]
 loss_list = []
 c_loss = []

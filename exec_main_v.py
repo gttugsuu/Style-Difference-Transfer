@@ -2,10 +2,6 @@ import os
 import os.path
 import glob
 
-import matplotlib.pyplot as plt
-
-
-
 available_letters = 'AHW'
 # Style with serifs
 serif_folder_path = '../../input/style_diff/serif/random_select/'
