@@ -92,7 +92,7 @@ def custom_postp(tensor, image_size, output_path):
     return img
 
 # Function to load images
-def load_image(img_dir, img_size, device, invert):
+def load_images(img_dir, img_size, device, invert):
     prep = transforms.Compose([transforms.Resize((img_size,img_size)),
                             # transforms.RandomRotation(angle),
                             transforms.ToTensor(),
@@ -120,23 +120,23 @@ def load_image(img_dir, img_size, device, invert):
     return img_torch
 
 # Function to save images
-def save_images(content_image, style_image1, style_image2, opt_img, image_size, output_path, n_iter, content_invert, style_invert, result_invert):
+def save_images(content_image, opt_img, style_image1, style_image2, image_size, output_path, n_iter, content_invert, style_invert, result_invert):
 
     # Save style image 1
-    style_image = postp(style_image1, image_size, style_invert)
-    style_image.save(output_path + 'style1.bmp')
+    style_image1 = postp(style_image1, image_size, style_invert)
+    style_image1.save(output_path + 'style1.jpg')
 
     # Save style image 2
-    style_image = postp(style_image2, image_size, style_invert)
-    style_image.save(output_path + 'style2.bmp')
+    style_image2 = postp(style_image2, image_size, style_invert)
+    style_image2.save(output_path + 'style2.jpg')
 
     # Save content image
     content_image = postp(content_image, image_size, content_invert)
-    content_image.save(output_path + 'content.bmp')
+    content_image.save(output_path + 'content.jpg')
 
     # Save optimized images
     out_img = postp(opt_img, image_size, result_invert)
-    # out_img.save(output_path + '/{}.bmp'.format(n_iter))
+    out_img.save(output_path + '/{}.jpg'.format(n_iter))
         
     # Save summary image as [content image, style image1, style_image2, optimized image]
     images = [content_image, out_img, style_image1, style_image2]
