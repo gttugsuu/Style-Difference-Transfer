@@ -10,7 +10,7 @@ import torchvision
 from torchvision import transforms
 
 import PIL
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from scipy import ndimage
 import cv2
@@ -122,24 +122,33 @@ def load_images(img_dir, img_size, device, invert):
 # Function to save images
 def save_images(content_image, opt_img, style_image1, style_image2, image_size, output_path, n_iter, content_invert, style_invert, result_invert):
 
+    fnt = ImageFont.truetype('/usr/share/fonts/ubuntu/UbuntuMono-R.ttf', 13)
+
     # Save style image 1
     style_image1 = postp(style_image1, image_size, style_invert)
+    d = ImageDraw.Draw(style_image1)
+    d.text((0,0), "Style1", font=fnt, fill=(0,0,0))
     style_image1.save(output_path + 'style1.jpg')
 
     # Save style image 2
     style_image2 = postp(style_image2, image_size, style_invert)
+    d = ImageDraw.Draw(style_image2)
+    d.text((0,0), "Style2", font=fnt, fill=(0,0,0))
     style_image2.save(output_path + 'style2.jpg')
 
     # Save content image
     content_image = postp(content_image, image_size, content_invert)
+    d = ImageDraw.Draw(content_image)
+    d.text((0,0), "Content", font=fnt, fill=(0,0,0))
     content_image.save(output_path + 'content.jpg')
 
     # Save optimized images
     out_img = postp(opt_img, image_size, result_invert)
+    d = ImageDraw.Draw(out_img)
+    d.text((0,0), "Generated", font=fnt, fill=(0,0,0))
     out_img.save(output_path + '/{}.jpg'.format(n_iter))
         
-    # Save summary image as [content image, style image1, style_image2, optimized image]
-    images = [content_image, out_img, style_image1, style_image2]
+    images = [style_image1, style_image2, content_image, out_img]
     # widths, heights = zip(*(i.size for i in images))
     widths = [i.size[0] for i in images]
     heights = [i.size[1] for i in images]

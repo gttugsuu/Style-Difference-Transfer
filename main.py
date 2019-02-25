@@ -32,17 +32,17 @@ parser.add_argument('--sw3', '-sw3', type=float,  default=1, help='sw3')
 parser.add_argument('--sw4', '-sw4', type=float,  default=1, help='sw4')
 parser.add_argument('--sw5', '-sw5', type=float,  default=1, help='sw5')
 # parser for content weights
-parser.add_argument('--cw1', '-cw1', type=float,  default=0,   help='cw1')
-parser.add_argument('--cw2', '-cw2', type=float,  default=0,   help='cw2')
-parser.add_argument('--cw3', '-cw3', type=float,  default=0,   help='cw3')
-parser.add_argument('--cw4', '-cw4', type=float,  default=1e5, help='cw4')
-parser.add_argument('--cw5', '-cw5', type=float,  default=0,   help='cw5')
+parser.add_argument('--cw1', '-cw1', type=float,  default=1, help='cw1')
+parser.add_argument('--cw2', '-cw2', type=float,  default=1, help='cw2')
+parser.add_argument('--cw3', '-cw3', type=float,  default=1, help='cw3')
+parser.add_argument('--cw4', '-cw4', type=float,  default=1, help='cw4')
+parser.add_argument('--cw5', '-cw5', type=float,  default=1, help='cw5')
 # parser for input images paths and names
-parser.add_argument('--image_size', '-image_size', type=int, default=128)
+parser.add_argument('--image_size', '-image_size', type=int, default=256)
 # parser for input images paths and names
-parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/AlegreyaSans-Light/A.png')
-parser.add_argument('--style_path1', '-style_path1', type=str, default='../input/font_contents/serif/A/Sofia-Regular.png')
-parser.add_argument('--style_path2', '-style_path2', type=str, default='../input/font_contents/serif_rmv/A/Sofia-Regular.png')
+parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/sanserifs/AbyssinicaSIL-Regular.png')
+parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/serif/A/Sofia-Regular.png')
+parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/serif_rmv/A/Sofia-Regular.png')
 # parser for output path
 parser.add_argument('--output_path', '-output_path', type=str, default='../output_style_difference/', help='Path to save output files')
 # parser for cuda
@@ -52,11 +52,11 @@ args = parser.parse_args()
 #############################################################################
 # Get image paths and names
 # Style 1
-style_dir1  = os.path.dirname(args.style_path1)
-style_name1 = os.path.basename(args.style_path1)
+style_dir1  = os.path.dirname(args.serif_style_path)
+style_name1 = os.path.basename(args.serif_style_path)
 # Style 2
-style_dir2  = os.path.dirname(args.style_path2)
-style_name2 = os.path.basename(args.style_path2)
+style_dir2  = os.path.dirname(args.nonserif_style_path)
+style_name2 = os.path.basename(args.nonserif_style_path)
 # Content
 content_dir  = os.path.dirname(args.content_path)
 content_name = os.path.basename(args.content_path)
@@ -96,8 +96,6 @@ except:
     pass
 output_path = output_path + content_name[:-4] + '_' + style_name1[:-4] + '_' + style_name2[:-4] + '/'
 
-
-
 # Get network
 vgg = VGG()
 vgg.load_state_dict(torch.load('../Models/vgg_conv.pth'))
@@ -119,12 +117,10 @@ opt_img = Variable(content_image.data.clone(), requires_grad=True)
 # Define layers, loss functions, weights and compute optimization targets
 # Style layers
 style_layers = ['r11','r21','r31','r41','r51'] 
-style_weights = [sw1*1e3/(64**2), sw2*1e3/(128**2), sw3*1e3/(256**2), sw4*1e3/(512**2), sw5*1e3/(512**2)]
+style_weights = [sw*1e3/n**2 for sw,n in zip([sw1,sw2,sw3,sw4,sw5],[64,128,256,512,512])]
 # Content layers
-content_layers = ['r42']
-content_weights = [cw4]
-# content_layers = ['r12','r22','r32','r42','r52']
-# content_weights = [args.cw1, args.cw2, args.cw3, args.cw4, args.cw5]
+content_layers = ['r12','r22','r32','r42','r52']
+content_weights = [cw1*1e5,cw2*1e5,cw3*1e5,cw4*1e5,cw5*1e5]
 
 loss_layers = style_layers + content_layers
 loss_functions = [GramMSELoss()] * len(style_layers) + [nn.MSELoss()] * len(content_layers)
@@ -160,8 +156,8 @@ content_fm_content = [A.detach() for A in vgg(content_image, content_layers)]
 # Run style transfer
 make_folders(output_path)
 
-max_iter = 1000
-show_iter = 100
+max_iter = 600
+show_iter = 50
 optimizer = optim.LBFGS([opt_img])
 n_iter=[0]
 loss_list = []
@@ -213,8 +209,10 @@ while n_iter[0] <= max_iter:
 
         #print loss
         if n_iter[0]%show_iter == 0:
-            print('Iteration: {} \nContent loss: {} \nStyle loss  : {} \nTotal loss  : {}'
-            .format(n_iter[0], content_loss.item(), style_loss.item(), loss.item()))
+            print('Iteration: {}'.format(n_iter[0]))
+            print('Content loss: {}'.format(content_loss.item()))
+            print('Style loss  : {}'.format(style_loss.item()))
+            print('Total loss  : {}'.format(loss.item()))
 
             # Save loss graph
             plt.plot(loss_list, label='Total loss')
@@ -225,7 +223,6 @@ while n_iter[0] <= max_iter:
             plt.close()
             # Save optimized image
             out_img = postp(opt_img.data[0].cpu().squeeze(), image_size, result_invert)
-            #out_img = PIL.ImageOps.invert(out_img)
             out_img.save(output_path + 'outputs/{}.bmp'.format(n_iter[0]))
         n_iter[0] += 1
         return loss
