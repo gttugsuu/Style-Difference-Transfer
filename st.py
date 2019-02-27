@@ -32,11 +32,11 @@ parser.add_argument('--sw3', '-sw3', type=float,  default=1, help='sw3')
 parser.add_argument('--sw4', '-sw4', type=float,  default=1, help='sw4')
 parser.add_argument('--sw5', '-sw5', type=float,  default=1, help='sw5')
 # parser for content weights
-parser.add_argument('--cw1', '-cw1', type=float,  default=1, help='cw1')
-parser.add_argument('--cw2', '-cw2', type=float,  default=1, help='cw2')
-parser.add_argument('--cw3', '-cw3', type=float,  default=1, help='cw3')
+parser.add_argument('--cw1', '-cw1', type=float,  default=0, help='cw1')
+parser.add_argument('--cw2', '-cw2', type=float,  default=0, help='cw2')
+parser.add_argument('--cw3', '-cw3', type=float,  default=0, help='cw3')
 parser.add_argument('--cw4', '-cw4', type=float,  default=1, help='cw4')
-parser.add_argument('--cw5', '-cw5', type=float,  default=1, help='cw5')
+parser.add_argument('--cw5', '-cw5', type=float,  default=0, help='cw5')
 # parser for input images paths and names
 parser.add_argument('--image_size', '-image_size', type=int, default=256)
 # parser for input images paths and names
@@ -121,6 +121,7 @@ style_weights = [sw*1e3/n**2 for sw,n in zip([sw1,sw2,sw3,sw4,sw5],[64,128,256,5
 # Content layers
 content_layers = ['r12','r22','r32','r42','r52']
 content_weights = [cw1*1e5,cw2*1e5,cw3*1e5,cw4*1e5,cw5*1e5]
+
 
 loss_layers = style_layers + content_layers
 loss_functions = [GramMSELoss()] * len(style_layers) + [nn.MSELoss()] * len(content_layers)

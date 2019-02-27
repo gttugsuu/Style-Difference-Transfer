@@ -4,8 +4,8 @@ import glob
 
 # alphabet = 'ABCDEFGHIJKLMNOQPRSTUVWXYZ' 
 
-style1_folder_path = '../input/font_contents/curvy_fonts/'
-style2_folder_path = '../input/font_contents/striped_curvy_fonts/'
+style1_folder_path = '../input/font_contents/serif/B/'
+style2_folder_path = '../input/font_contents/serif_rmv/B/'
 content_folder_path= '../input/font_contents/sanserifs/'
 
 style1_path_list = glob.glob(style1_folder_path+'*')
@@ -16,11 +16,13 @@ style_name_list = [os.path.basename(path) for path in style1_path_list]
 
 output_path = "../output_style_difference/patch_matching/"
 
+cuda = 'cuda:1'
+
 for content_path in content_path_list:
     for style_name in style_name_list:
         style1_path = style1_folder_path + style_name
         style2_path = style2_folder_path + style_name
-        command = 'python st_patch.py -serif_style_path {} -nonserif_style_path {} -content_path {} -output_path {}'.format(style1_path, style2_path, content_path, output_path)
+        command = 'python st_patch.py -serif_style_path {} -nonserif_style_path {} -content_path {} -output_path {} -cuda {}'.format(style1_path, style2_path, content_path, output_path, cuda)
         print(command)
         os.system(command)
 

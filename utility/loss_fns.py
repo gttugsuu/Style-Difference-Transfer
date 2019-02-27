@@ -135,3 +135,28 @@ def smoothnes_loss(x):
     reg_loss = ((x-a)**2 + (x-b)**2).sum()
     return reg_loss
 
+"""
+Difference between corresponding patches from two layers:
+conv3_1 & conv4_1.
+Inputs patch lists
+Outputs difference patch lists
+"""
+
+def patch_difference(patch_list1, patch_list2):
+    # patches from the layer conv3_1
+    diff_patches_list1 = []
+    for i in range(len(patch_list1[0])):
+        p1 = patch_list1[0][i]
+        p2 = patch_list2[0][i]
+        p=p1-p2
+        # p[p<0]=0
+        diff_patches_list1.append(p)
+    # patches from the layer conv4_1
+    diff_patches_list2 = []
+    for i in range(len(patch_list1[1])):
+        p1 = patch_list1[1][i]
+        p2 = patch_list2[1][i]
+        p=p1-p2
+        # p[p<0]=0
+        diff_patches_list2.append(p)
+    return diff_patches_list1, diff_patches_list2

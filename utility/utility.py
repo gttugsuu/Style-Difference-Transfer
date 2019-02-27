@@ -105,16 +105,11 @@ def load_images(img_dir, img_size, device, invert):
                             ])
     # Load & invert image
     image = Image.open(img_dir)
+    image = image.convert('RGB')
     if invert:
         image = PIL.ImageOps.invert(image)
-    image = image.convert('RGB')
     # Make torch variable
     img_torch = prep(image)
-    # Use cuda if available
-    # if torch.cuda.is_available():
-    #     img_torch = Variable(img_torch.unsqueeze(0).cuda())
-    # else:
-    #     img_torch = Variable(img_torch.unsqueeze(0))
     img_torch = Variable(img_torch.unsqueeze(0).to(device))
     
     return img_torch
