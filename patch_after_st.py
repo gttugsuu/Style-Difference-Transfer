@@ -39,11 +39,11 @@ parser.add_argument('--cw3', '-cw3', type=float,  default=0, help='cw3')
 parser.add_argument('--cw4', '-cw4', type=float,  default=1, help='cw4')
 parser.add_argument('--cw5', '-cw5', type=float,  default=0, help='cw5')
 # parser for input images paths and names
-parser.add_argument('--image_size', '-image_size', type=int, default=64)
+parser.add_argument('--image_size', '-image_size', type=int, default=128)
 # parser for input images paths and names
 parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/sanserifs/AdventPro-Medium.png')
-parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/curvy_fonts/CherrySwash-Bold.png')
-parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/striped_curvy_fonts/CherrySwash-Bold.png')
+parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/serif/A/Italianno-Regular.png')
+parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/serif_rmv/A/Italianno-Regular.png')
 # parser for output path
 parser.add_argument('--output_path', '-output_path', type=str, default='../output_style_difference/test/', help='Path to save output files')
 # parser for cuda
@@ -125,7 +125,7 @@ style_weights = [sw*1e3/n**2 for sw,n in zip([sw1,sw2,sw3,sw4,sw5],[64,128,256,5
 # content_layers = ['r12','r22','r32','r42','r52']
 # content_weights = [cw1*1e5,cw2*1e5,cw3*1e5,cw4*1e5,cw5*1e5]
 content_layers = ['r42']
-content_weights = [cw4*1e4]
+content_weights = [cw4*1e5]
 # Patch layers
 patch_layers = ['r31','r41']
 
@@ -166,7 +166,9 @@ content_fm_content = [A.detach() for A in vgg(content_image, content_layers)]
 
 #### Feature maps from patch layers of the style images
 style1_fms_patch = [A.detach() for A in vgg(style_image1, patch_layers)]
+KeyboardInterrupt
 style2_fms_patch = [A.detach() for A in vgg(style_image2, patch_layers)]
+KeyboardInterrupt
 #### Patches extracted from the feature maps
 style1_patches_lists, style1_weight_list = get_style_patch_weights(style1_fms_patch, device, k=patch_size)
 style2_patches_lists, style2_weight_list = get_style_patch_weights(style2_fms_patch, device, k=patch_size)
@@ -237,27 +239,91 @@ while n_iter[0] <= max_iter:
         fms_diff = [opt_fms_content[i] - content_fm_content[i] for i in range(len(content_layers))]
         content_layer_losses = [content_weights[i]*nn.MSELoss()(fms_diff[i],style_fms_content[i]) for i in range(len(content_layers))]
 
+        # losses
+        content_loss = sum(content_layer_losses)
+        style_loss   = sum(style_layer_losses)
 
-        ## Differnce between the patches
-        #### Patches extracted from the opt feature maps
-        # opt_patches_lists, opt_weight_list = get_style_patch_weights(opt_fms_patch, device, k=patch_size)
-        #### Difference between corresponding patches with content patches
-        # diff_patches_list1_1, diff_patches_list2_2 = patch_difference(opt_patches_lists,content_patches_lists)
+        loss = style_loss + content_loss
+        # layer_losses = content_layer_losses + style_layer_losses + patch_layer_losses
 
-        ## Difference between the feature maps then patch loss
-        #### Difference between feature maps of opt and content on patch layers
-        # fms_diff_patch = [opt_fms_patch[i] + content_fms_patch[i] for i in range(len(patch_layers))]
+        # # total loss
+        # loss = sum(layer_losses)
+
+        # for log
+        c_loss.append(content_loss)
+        s_loss.append(style_loss)
+        loss_list.append(loss)
+
+        # backward calculation
+        loss.backward()
+
+        #print loss
+        if n_iter[0]%show_iter == 0:
+            print('Iteration: {}'.format(n_iter[0]))
+            if len(content_layers)>0: print('Content loss: {}'.format(content_loss.item()))
+            if len(style_layers)>0:   print('Style loss  : {}'.format(style_loss.item()))
+            print('Total loss  : {}'.format(loss.item()))
+
+            # Save loss graph
+            # plt.plot(loss_list, label='Total loss')
+            if len(content_layers)>0:  plt.plot(c_loss, label='Content loss')
+            if len(style_layers)  >0:  plt.plot(s_loss, label='Style loss')
+            plt.legend()
+            plt.savefig(output_path + 'loss_graph.jpg')
+            plt.close()
+            # Save optimized image
+            out_img = postp(opt_img.data[0].cpu().squeeze(), image_size, result_invert)
+            out_img.save(output_path + 'outputs/{}.bmp'.format(n_iter[0]))
+        n_iter[0] += 1
+        return loss
+      
+    optimizer.step(closure)
+
+save_images(content_image.data[0].cpu().squeeze(), opt_img.data[0].cpu().squeeze(), style_image1.data[0].cpu().squeeze(), style_image2.data[0].cpu().squeeze(), image_size, output_path, n_iter, content_invert, style_invert, result_invert)
+
+max_iter = 1200
+
+while n_iter[0] <= max_iter:
+
+    def closure():
+        # optimizer.zero_grad()
+        out = vgg(opt_img, loss_layers)
+        
+        # Divide between style feature maps, content feature maps and patch feature maps
+        opt_fms_style = out[:len(style_layers)]
+        opt_fms_content = out[len(style_layers):len(style_layers)+len(content_layers)]
+        opt_fms_patch = out[-len(patch_layers):]
+
+        # Difference between feature maps on style layers
+        diff_fms_style = [opt_fms_style[i] - content_fms_style[i] for i in range(len(style_layers))]
+        gramm_diff = [GramMatrix()(A) for A in diff_fms_style]
+        # Difference between gram matrix of feature map differences
+        style_layer_losses = [style_weights[i]*(nn.MSELoss()(gramm_diff[i], gramm_style[i])) for i in range(len(style_layers))]
+
+        ## Difference between feature maps on content layers
+        fms_diff = [opt_fms_content[i] - content_fm_content[i] for i in range(len(content_layers))]
+        content_layer_losses = [content_weights[i]*nn.MSELoss()(fms_diff[i],style_fms_content[i]) for i in range(len(content_layers))]
+
+        # Differnce between the patches
+        ### Patches extracted from the opt feature maps
+        opt_patches_lists, opt_weight_list = get_style_patch_weights(opt_fms_patch, device, k=patch_size)
+        ### Difference between corresponding patches with content patches
+        diff_patches_list1_1, diff_patches_list2_2 = patch_difference(opt_patches_lists,content_patches_lists)
+        #### Patch loss
+        patch_layer_losses = []
+        for i in range(len(diff_patches_list1)):
+            patch_layer_losses.append(nn.MSELoss()(diff_patches_list1_1[i],diff_patches_list1[i]))
+        for i in range(len(diff_patches_list2)):
+            patch_layer_losses.append(nn.MSELoss()(diff_patches_list2_2[i],diff_patches_list2[i]))
+
+        # Difference between the feature maps then patch loss
+        ### Difference between feature maps of opt and content on patch layers
+        # fms_diff_patch = [opt_fms_patch[i] - content_fms_patch[i] for i in range(len(patch_layers))]
         # patch_layer_losses = [mrf_loss_fn(fms_diff_patch, style_patches_lists, style_weight_list, k=patch_size)]
 
-        #### Patch loss
-        # patch_layer_losses = []
-        # for i in range(len(diff_patches_list1)):
-        #     patch_layer_losses.append(nn.MSELoss()(diff_patches_list1_1[i],diff_patches_list1[i]))
-        # for i in range(len(diff_patches_list2)):
-        #     patch_layer_losses.append(nn.MSELoss()(diff_patches_list2_2[i],diff_patches_list2[i]))
 
         ## Patch loss combined patches
-        patch_layer_losses = [mrf_loss_fn(opt_fms_patch, combined_patches_lists, weight_list, k=patch_size)]
+        # patch_layer_losses = [mrf_loss_fn(opt_fms_patch, combined_patches_lists, weight_list, k=patch_size)]
 
         # Regularzier
         regularizer = smoothnes_loss(opt_img)

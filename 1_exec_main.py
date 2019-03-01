@@ -4,15 +4,18 @@ import glob
 
 # alphabet = 'ABCDEFGHIJKLMNOQPRSTUVWXYZ' 
 
-style1_folder_path = '../input/font_contents/serif/B/'
-style2_folder_path = '../input/font_contents/serif_rmv/B/'
+style1_folder_path = '../input/font_contents/serif/A/'
+style2_folder_path = '../input/font_contents/serif_rmv/A/'
 content_folder_path= '../input/font_contents/sanserifs/'
 
 style1_path_list = glob.glob(style1_folder_path+'*')
 style2_path_list = glob.glob(style2_folder_path+'*')
-content_path_list= glob.glob(content_folder_path+'*')
+
+content_path_list = glob.glob(content_folder_path+'*')
+content_path_list = ['../input/font_contents/sanserifs/AdventPro-Medium.png']
 
 style_name_list = [os.path.basename(path) for path in style1_path_list]
+style_name_list = ['SupermercadoOne-Regular.png']
 
 output_path = "../output_style_difference/patch_matching/"
 
