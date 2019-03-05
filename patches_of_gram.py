@@ -32,11 +32,9 @@ parser.add_argument('--cw3', '-cw3', type=float,  default=0, help='cw3')
 parser.add_argument('--cw4', '-cw4', type=float,  default=1, help='cw4')
 parser.add_argument('--cw5', '-cw5', type=float,  default=0, help='cw5')
 # parser for input images paths and names
-parser.add_argument('--image_size', '-image_size', type=int, default=256)
+parser.add_argument('--image_size', '-image_size', type=int, default=128)
 # parser for input images paths and names
 parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/sanserifs/AdventPro-Medium.png')
-#parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/styles/colorful_flower.jpg')
-#parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/styles/colorful_flower_core.jpg')
 parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/curvy_fonts/MrsSheppards-Regular.png')
 parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/striped_curvy_fonts/MrsSheppards-Regular.png')
 # parser for output path
@@ -79,7 +77,7 @@ cw5=args.cw5
 # Parameters
 alpha = args.alpha
 beta = args.beta
-patch_size = 16
+patch_size = 5
 image_size = args.image_size
 content_invert = 1
 style_invert = 1
@@ -113,14 +111,14 @@ opt_img = Variable(content_image.data.clone(), requires_grad=True)
 # Define layers, loss functions, weights and compute optimization targets
 
 #### Style layers
-# style_layers = ['r11','r21','r31','r41','r51'] 
-style_layers = []
+style_layers = ['r11','r21','r31','r41','r51'] 
+# style_layers = []
 style_weights = [sw*1e3/n**2 for sw,n in zip([sw1,sw2,sw3,sw4,sw5],[64,128,256,512,512])]
 #### Content layers
 # content_layers = ['r12','r22','r32','r42','r52']
 # content_weights = [cw1*1e5,cw2*1e5,cw3*1e5,cw4*1e5,cw5*1e5]
-content_layers = ['r11','r12','r21','r22']
-content_weights = [cw3*1e4,cw4*1e4,cw3*1e4,cw4*1e4]
+content_layers = ['r42']
+content_weights = [cw4*1e4]
 # Patch layers
 patch_layers = ['r31','r41']
 
@@ -165,30 +163,27 @@ style2_fms_patch = [A.detach() for A in vgg(style_image2, patch_layers)]
 #### Patches extracted from the feature maps
 style1_patches_lists, style1_weight_list = get_style_patch_weights(style1_fms_patch, device, k=patch_size)
 style2_patches_lists, style2_weight_list = get_style_patch_weights(style2_fms_patch, device, k=patch_size)
-
 #### Difference between corresponding patches
 diff_patches_list1, diff_patches_list2 = patch_difference(style1_patches_lists,style2_patches_lists)
-
 #### Different patches between style1 & style2
-#style1_different_patches256 = []
-#style2_different_patches256 = []
-#for p1, p2 in zip(style1_patches_lists[0], style2_patches_lists[0]):
-#    if not torch.eq(p1,p2).all():
-#        style1_different_patches256.append(p1)
-#        style2_different_patches256.append(p2)
-#style1_different_patches512 = []
-#style2_different_patches512 = []
-#for p1, p2 in zip(style1_patches_lists[1], style2_patches_lists[1]):
-#    if not torch.eq(p1,p2).all():
-#        style1_different_patches512.append(p1)
-#        style2_different_patches512.append(p2)
-#style1_different_patches = [style1_different_patches256, style1_different_patches512]
+style1_different_patches256 = []
+style2_different_patches256 = []
+for p1, p2 in zip(style1_patches_lists[0], style2_patches_lists[0]):
+    if not torch.eq(p1,p2).all():
+        style1_different_patches256.append(p1)
+        style2_different_patches256.append(p2)
+style1_different_patches512 = []
+style2_different_patches512 = []
+for p1, p2 in zip(style1_patches_lists[1], style2_patches_lists[1]):
+    if not torch.eq(p1,p2).all():
+        style1_different_patches512.append(p1)
+        style2_different_patches512.append(p2)
+style1_different_patches = [style1_different_patches256, style1_different_patches512]
 
 #### Difference between feature maps
-#style_fms_patch =  [style1_fms_patch[i] - style2_fms_patch[i] for i in range(len(patch_layers))]
+style_fms_patch =  [style1_fms_patch[i] - style2_fms_patch[i] for i in range(len(patch_layers))]
 #### Patches extracted from the difference feature maps
-#style_patches_lists, style_weight_list = get_style_patch_weights(style_fms_patch, device, k=patch_size)
-
+style_patches_lists, style_weight_list = get_style_patch_weights(style_fms_patch, device, k=patch_size)
 
 #### Feature maps from patch layers of the content image
 content_fms_patch = [A.detach() for A in vgg(content_image, patch_layers)]
@@ -196,9 +191,9 @@ content_fms_patch = [A.detach() for A in vgg(content_image, patch_layers)]
 content_patches_lists, content_weight_list = get_style_patch_weights(style1_fms_patch, device, k=patch_size)
 
 #### Integrate different patches to content patches
-#combined_patches_lists = [content_patches_lists[0]+style1_different_patches256,content_patches_lists[1]+style1_different_patches512]
+combined_patches_lists = [content_patches_lists[0]+style1_different_patches256,content_patches_lists[1]+style1_different_patches512]
 #### Create weights to use for convolution, in per channel size
-#weight_list = [weight_maker(style_plist,patch_size,device) for style_plist in combined_patches_lists]
+weight_list = [weight_maker(style_plist,patch_size,device) for style_plist in combined_patches_lists]
 
 # Run style transfer
 make_folders(output_path)
@@ -238,9 +233,9 @@ while n_iter[0] <= max_iter:
 
         ## Differnce between the patches
         #### Patches extracted from the opt feature maps
-        opt_patches_lists, opt_weight_list = get_style_patch_weights(opt_fms_patch, device, k=patch_size)
+        # opt_patches_lists, opt_weight_list = get_style_patch_weights(opt_fms_patch, device, k=patch_size)
         #### Difference between corresponding patches with content patches
-        diff_patches_list1_1, diff_patches_list2_2 = patch_difference(opt_patches_lists,content_patches_lists)
+        # diff_patches_list1_1, diff_patches_list2_2 = patch_difference(opt_patches_lists,content_patches_lists)
 
         ## Difference between the feature maps then patch loss
         #### Difference between feature maps of opt and content on patch layers
@@ -248,14 +243,14 @@ while n_iter[0] <= max_iter:
         # patch_layer_losses = [mrf_loss_fn(fms_diff_patch, style_patches_lists, style_weight_list, k=patch_size)]
 
         #### Patch loss
-        patch_layer_losses = []
-        for i in range(len(diff_patches_list1)):
-            patch_layer_losses.append(nn.MSELoss()(diff_patches_list1_1[i],diff_patches_list1[i]))
-        for i in range(len(diff_patches_list2)):
-            patch_layer_losses.append(nn.MSELoss()(diff_patches_list2_2[i],diff_patches_list2[i]))
+        # patch_layer_losses = []
+        # for i in range(len(diff_patches_list1)):
+        #     patch_layer_losses.append(nn.MSELoss()(diff_patches_list1_1[i],diff_patches_list1[i]))
+        # for i in range(len(diff_patches_list2)):
+        #     patch_layer_losses.append(nn.MSELoss()(diff_patches_list2_2[i],diff_patches_list2[i]))
 
         ## Patch loss combined patches
-#        patch_layer_losses = [mrf_loss_fn(opt_fms_patch, combined_patches_lists, weight_list, k=patch_size)]
+        patch_layer_losses = [mrf_loss_fn(opt_fms_patch, combined_patches_lists, weight_list, k=patch_size)]
 
         # Regularzier
         regularizer = smoothnes_loss(opt_img)

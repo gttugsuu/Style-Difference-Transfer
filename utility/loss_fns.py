@@ -12,7 +12,7 @@ def get_patches(feature_map, k=5):
     # size of a patch kxk
     # for i in range(feature_map.shape[3] - k):
     #     for j in range(feature_map.shape[3] - k):
-    stride = 1
+    stride = 5
     for i in range(0,feature_map.shape[3] - k, stride):
         for j in range(0,feature_map.shape[3] - k, stride):
             patch = feature_map[:,:,i:i+k,j:j+k]

@@ -3,10 +3,7 @@ import os
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
-import torch.nn.functional as F
-from torch import optim
 
-import torchvision
 from torchvision import transforms
 
 import PIL
