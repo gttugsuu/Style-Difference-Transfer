@@ -34,8 +34,6 @@ def divide_patches(style_patches):
         return style_patches_lists
 def weight_maker(style_patches,k,device):
         weights = torch.zeros(size=(len(style_patches),style_patches[0].shape[1],k,k))
-        # if torch.cuda.is_available:
-        #     weights = weights.cuda()
         weights = weights.to(device)
         for i in range(len(style_patches)):
             weights[i,:,:,:] = style_patches[i].clone()

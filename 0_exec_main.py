@@ -4,20 +4,21 @@ import glob
 
 # alphabet = 'ABCDEFGHIJKLMNOQPRSTUVWXYZ' 
 
-style1_folder_path = '../input/font_contents/serif/H/'
-style2_folder_path = '../input/font_contents/serif_rmv/H/'
-content_folder_path= '../input/font_contents/sanserifs/'
+style1_folder_path = '../input/font_contents/serif/W/'
+style2_folder_path = '../input/font_contents/serif_rmv/W/'
+content_folder_path= '../input/font_contents/sanserifs/H/'
 
 style1_path_list = glob.glob(style1_folder_path+'*')
 style2_path_list = glob.glob(style2_folder_path+'*')
 
 content_path_list = glob.glob(content_folder_path+'*')
-# content_path_list = ['../input/font_contents/sanserifs/AdventPro-Medium.png']
+content_path_list = ['../input/font_contents/sanserifs/H/H.png']
+content_path_list = ['../input/font_contents/AlegreyaSans-Light/Y.png','../input/font_contents/AlegreyaSans-Light/U.png']
 
 style_name_list = [os.path.basename(path) for path in style1_path_list]
-# style_name_list = ['Italianno-Regular.png']
+style_name_list = ['Sacramento-Regular.png','SupermercadoOne-Regular.png','Warnes-Regular.png','Milonga-Regular.png','PT_Serif-Caption-Web-Regular.png']
 
-output_path = "../output_style_difference/everything_H/"
+output_path = "../output_style_difference/serif_transfer/"
 
 cuda = 'cuda:0'
 

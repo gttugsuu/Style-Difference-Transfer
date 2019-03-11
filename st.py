@@ -24,19 +24,19 @@ parser.add_argument('--sw3', '-sw3', type=float,  default=1, help='sw3')
 parser.add_argument('--sw4', '-sw4', type=float,  default=1, help='sw4')
 parser.add_argument('--sw5', '-sw5', type=float,  default=1, help='sw5')
 # parser for content weights
-parser.add_argument('--cw1', '-cw1', type=float,  default=1, help='cw1')
-parser.add_argument('--cw2', '-cw2', type=float,  default=1, help='cw2')
-parser.add_argument('--cw3', '-cw3', type=float,  default=1, help='cw3')
+parser.add_argument('--cw1', '-cw1', type=float,  default=0, help='cw1')
+parser.add_argument('--cw2', '-cw2', type=float,  default=0, help='cw2')
+parser.add_argument('--cw3', '-cw3', type=float,  default=0, help='cw3')
 parser.add_argument('--cw4', '-cw4', type=float,  default=1, help='cw4')
 parser.add_argument('--cw5', '-cw5', type=float,  default=0, help='cw5')
 # parser for input images paths and names
-parser.add_argument('--image_size', '-image_size', type=int, default=512)
+parser.add_argument('--image_size', '-image_size', type=int, default=256)
 # parser for input images paths and names
-parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/sanserifs/AdventPro-Medium.png')
-parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/serif/A/Sofia-Regular.png')
-parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/serif_rmv/A/Sofia-Regular.png')
+parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/sanserifs/A/PT_Sans-Caption-Web-Bold-A.png')
+parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/serif/A/SnowburstOne-Regular.png')
+parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/serif_rmv/A/SnowburstOne-Regular.png')
 # parser for output path
-parser.add_argument('--output_path', '-output_path', type=str, default='../output_style_difference/test/', help='Path to save output files')
+parser.add_argument('--output_path', '-output_path', type=str, default='../output_style_difference/direct/', help='Path to save output files')
 # parser for cuda
 parser.add_argument('--cuda', '-cuda', type=str, default='cuda:0', help='cuda:0 or cuda:x')
 
@@ -107,12 +107,12 @@ opt_img = Variable(content_image.data.clone(), requires_grad=True)
 
 # Define layers, loss functions, weights and compute optimization targets
 # Style layers
-style_layers = ['r12','r22','r34','r34','r54'] 
+style_layers = ['r12','r22','r34','r44','r54'] 
 style_weights = [sw*1e3/n**2 for sw,n in zip([sw1,sw2,sw3,sw4,sw5],[64,128,256,512,512])]
-style_weights = [10,10,10,10,10]
+# style_weights = [1,1,1,1,1]
 # Content layers
 #content_layers = ['r12','r22','r32','r42','r52']
-content_layers = ['r21','r31','r32','r33','r34']
+content_layers = ['r31','r32','r33','r34','r41']
 #content_layers = []
 content_weights = [cw1*1e4,cw2*1e4,cw3*1e4,cw4*1e4,cw5*1e4]
 
@@ -160,7 +160,7 @@ content_fm_content = [A.detach() for A in vgg(content_image, content_layers)]
 # Run style transfer
 make_folders(output_path)
 
-max_iter = 5000
+max_iter = 1000
 show_iter = 50
 optimizer = optim.LBFGS([opt_img])
 n_iter=[0]
@@ -204,14 +204,14 @@ while n_iter[0] <= max_iter:
         content_loss = sum(content_layer_losses)
         style_loss   = sum(style_layer_losses)
         
-        ld1 = len(str(content_loss.item()))
-        ld2 = len(str(style_loss.item()))
-        if ld1 > ld2:
-            div = ld1 - ld2
-            style_loss = style_loss*(10**(div))
-        else:
-            div = ld2 - ld1
-            content_loss = content_loss*(10**(div))
+        # ld1 = len(str(content_loss.item()))
+        # ld2 = len(str(style_loss.item()))
+        # if ld1 > ld2:
+        #     div = ld1 - ld2
+        #     style_loss = style_loss*(10**(div))
+        # else:
+        #     div = ld2 - ld1
+        #     content_loss = content_loss*(10**(div))
         
         
         layer_losses = content_layer_losses + style_layer_losses
