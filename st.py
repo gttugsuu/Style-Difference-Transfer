@@ -13,7 +13,7 @@ from utility.utility import postp, GramMatrix, GramMSELoss, load_images, save_im
 from utility.vgg_network import VGG
 #############################################################################
 # PARSER
-parser = argparse.ArgumentParser(description='A Neural Algorithm of Artistic Style')
+parser = argparse.ArgumentParser(description='Style Difference Transfer')
 # parameters
 parser.add_argument('--alpha', '-alpha', type=float, default = 1, help='parameter for content loss')
 parser.add_argument('--beta', '-beta', type=float, default = 1, help='parameter for style loss')
@@ -24,17 +24,17 @@ parser.add_argument('--sw3', '-sw3', type=float,  default=1, help='sw3')
 parser.add_argument('--sw4', '-sw4', type=float,  default=1, help='sw4')
 parser.add_argument('--sw5', '-sw5', type=float,  default=1, help='sw5')
 # parser for content weights
-parser.add_argument('--cw1', '-cw1', type=float,  default=0, help='cw1')
-parser.add_argument('--cw2', '-cw2', type=float,  default=0, help='cw2')
-parser.add_argument('--cw3', '-cw3', type=float,  default=0, help='cw3')
+parser.add_argument('--cw1', '-cw1', type=float,  default=1, help='cw1')
+parser.add_argument('--cw2', '-cw2', type=float,  default=1, help='cw2')
+parser.add_argument('--cw3', '-cw3', type=float,  default=1, help='cw3')
 parser.add_argument('--cw4', '-cw4', type=float,  default=1, help='cw4')
-parser.add_argument('--cw5', '-cw5', type=float,  default=0, help='cw5')
+parser.add_argument('--cw5', '-cw5', type=float,  default=1, help='cw5')
 # parser for input images paths and names
 parser.add_argument('--image_size', '-image_size', type=int, default=256)
 # parser for input images paths and names
-parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/sanserifs/A/PT_Sans-Caption-Web-Bold-A.png')
-parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/serif/A/SnowburstOne-Regular.png')
-parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/serif_rmv/A/SnowburstOne-Regular.png')
+parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/serif_sans/U/serif/LindenHill-Italic.png')
+parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/serif_sans/U/sans/LindenHill-Regular.png')
+parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/sanserifs/U/CabinCondensed-Regular.png')
 # parser for output path
 parser.add_argument('--output_path', '-output_path', type=str, default='../output_style_difference/direct/', help='Path to save output files')
 # parser for cuda
@@ -108,13 +108,14 @@ opt_img = Variable(content_image.data.clone(), requires_grad=True)
 # Define layers, loss functions, weights and compute optimization targets
 # Style layers
 style_layers = ['r12','r22','r34','r44','r54'] 
-style_weights = [sw*1e3/n**2 for sw,n in zip([sw1,sw2,sw3,sw4,sw5],[64,128,256,512,512])]
+style_weights = [sw*1e3/n**2 for sw,n in zip([sw1,sw2,sw3,sw4,sw5],[64,128,256,512,1024])]
 # style_weights = [1,1,1,1,1]
 # Content layers
-#content_layers = ['r12','r22','r32','r42','r52']
-content_layers = ['r31','r32','r33','r34','r41']
-#content_layers = []
-content_weights = [cw1*1e4,cw2*1e4,cw3*1e4,cw4*1e4,cw5*1e4]
+# content_layers = ['r12','r22','r32','r42','r52']
+# content_layers = ['r31','r32','r33','r34','r41']
+content_layers = ['r42']
+content_weights = [1e3]
+# content_weights = [cw1*1e4,cw2*1e4,cw3*1e4,cw4*1e4,cw5*1e4]
 
 
 loss_layers = style_layers + content_layers
@@ -133,7 +134,7 @@ style2_fms_style = [A.detach() for A in vgg(style_image2, style_layers)]
 style1_gramm = [GramMatrix()(A) for A in style1_fms_style]
 style2_gramm = [GramMatrix()(A) for A in style2_fms_style]
 # Difference between gram matrices of style1 and style2
-gramm_style = [style1_gramm[i] - style2_gramm[i] for i in range(len(style_layers))]
+gramm_style = [(style1_gramm[i] - style2_gramm[i]) for i in range(len(style_layers))]
 
 
 # Difference between feature maps
@@ -152,9 +153,9 @@ content_gramm = [GramMatrix()(A) for A in content_fms_style]
 style1_fms_content = [A.detach() for A in vgg(style_image1, content_layers)]
 style2_fms_content = [A.detach() for A in vgg(style_image2, content_layers)]
 # Difference between feature maps
-style_fms_content = [style1_fms_content[i] - style2_fms_content[i] for i in range(len(content_layers))]
+style_fms_content = [(style1_fms_content[i] - style2_fms_content[i]) for i in range(len(content_layers))]
 # Feature maps from content layers of the content image
-content_fm_content = [A.detach() for A in vgg(content_image, content_layers)]
+content_fms_content = [A.detach() for A in vgg(content_image, content_layers)]
 
 
 # Run style transfer
@@ -192,12 +193,13 @@ while n_iter[0] <= max_iter:
 #        style_layer_losses = [style_weights[i]*(nn.MSELoss()(gramm_diff[i], gramm_style[i])) for i in range(len(style_layers))]
         
         opt_gramm = [GramMatrix()(A) for A in opt_fms_style]
-        gramm_diff = [opt_gramm[i] - content_gramm[i] for i in range(len(style_layers))]
+        gramm_diff = [(opt_gramm[i] - content_gramm[i]) for i in range(len(style_layers))]
         style_layer_losses = [style_weights[i]*nn.MSELoss()(gramm_diff[i], gramm_style[i]) for i in range(len(style_layers))]
 
         ## Difference between feature maps on content layers
-        fms_diff = [opt_fms_content[i] - content_fm_content[i] for i in range(len(content_layers))]
+        fms_diff = [(opt_fms_content[i] - content_fms_content[i]) for i in range(len(content_layers))]
         content_layer_losses = [content_weights[i]*nn.MSELoss()(fms_diff[i],style_fms_content[i]) for i in range(len(content_layers))]
+        # content_layer_losses = [content_weights[i]*nn.MSELoss()(opt_fms_content[i],content_fms_content[i]) for i in range(len(content_layers))]
         
 
         # losses
@@ -230,14 +232,14 @@ while n_iter[0] <= max_iter:
         #print loss
         if n_iter[0]%show_iter == 0:
             print('Iteration: {}'.format(n_iter[0]))
-            print('Content loss: {}'.format(content_loss.item()))
-            print('Style loss  : {}'.format(style_loss.item()))
+            if len(content_layers)>0: print('Content loss: {}'.format(content_loss.item()))
+            if len(style_layers)>0:   print('Style loss  : {}'.format(style_loss.item()))
             print('Total loss  : {}'.format(loss.item()))
 
             # Save loss graph
             plt.plot(loss_list, label='Total loss')
-            plt.plot(c_loss, label='Content loss')
-            plt.plot(s_loss, label='Style loss')
+            if len(content_layers)>0:  plt.plot(c_loss, label='Content loss')
+            if len(style_layers)  >0:  plt.plot(s_loss, label='Style loss')
             plt.legend()
             plt.savefig(output_path + 'loss_graph.jpg')
             plt.close()

@@ -4,29 +4,34 @@ import glob
 
 # alphabet = 'ABCDEFGHIJKLMNOQPRSTUVWXYZ' 
 
-style1_folder_path = '../input/font_contents/serif/W/'
-style2_folder_path = '../input/font_contents/serif_rmv/W/'
-content_folder_path= '../input/font_contents/serif/A/'
+style1_folder_path = '../input/font_contents/serif_sans/E/serif/'
+style2_folder_path = '../input/font_contents/serif_sans/E/sans/'
+content_folder_path= '../input/font_contents/sanserifs/E/'
 
 style1_path_list = glob.glob(style1_folder_path+'*')
 style2_path_list = glob.glob(style2_folder_path+'*')
 
+# print(style1_path_list)
+# print(style2_path_list)
+# exit()
+
+style1_path_list = ['../input/font_contents/serif_sans/E/serif/SourceSerifPro-Semibold.png', '../input/font_contents/serif_sans/E/serif/SourceSerifPro-Regular.png', '../input/font_contents/serif_sans/E/serif/NotoSerif-Bold.png', '../input/font_contents/serif_sans/E/serif/SourceSerifPro-Bold.png']
+style2_path_list = ['../input/font_contents/serif_sans/E/sans/SourceSansPro-Semibold.png', '../input/font_contents/serif_sans/E/sans/SourceSansPro-Bold.png', '../input/font_contents/serif_sans/E/sans/SourceSansPro-Regular.png', '../input/font_contents/serif_sans/E/sans/NotoSans-Bold.png']
+
 content_path_list = glob.glob(content_folder_path+'*')
-# content_path_list = ['../input/font_contents/sanserifs/A/A.png','../input/font_contents/sanserifs/A/AdventPro-Medium.png']
 
-style_name_list = [os.path.basename(path) for path in style1_path_list]
-style_name_list = ['SupermercadoOne-Regular.png','Warnes-Regular.png','Milonga-Regular.png','PT_Serif-Caption-Web-Regular.png']
+# print(content_path_list)
+# exit()
 
-output_path = "../output_style_difference/continit/"
+output_path = "../output_style_difference/serif_E/"
 
 cuda = 'cuda:1'
 
-for content_path in content_path_list:
-    for style_name in style_name_list:
-        style1_path = style1_folder_path + style_name
-        style2_path = style2_folder_path + style_name
-        command = 'python st.py -serif_style_path {} -nonserif_style_path {} -content_path {} -output_path {} -cuda {}'.format(style1_path, style2_path, content_folder_path+style_name, output_path, cuda)
-        # command = 'python st.py -serif_style_path {} -nonserif_style_path {} -content_path {} -output_path {} -cuda {}'.format(style1_path, style2_path, content_path, output_path, cuda)
+for content_path in content_path_list[2:]:
+    for i in range(len(style1_path_list)):
+        style1_path = style1_path_list[i]
+        style2_path = style2_path_list[i]
+        command = 'python st.py -serif_style_path {} -nonserif_style_path {} -content_path {} -output_path {} -cuda {}'.format(style1_path, style2_path, content_path, output_path, cuda)
         print(command)
         os.system(command)
 
