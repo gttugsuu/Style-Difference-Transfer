@@ -32,11 +32,11 @@ parser.add_argument('--cw5', '-cw5', type=float,  default=1, help='cw5')
 # parser for input images paths and names
 parser.add_argument('--image_size', '-image_size', type=int, default=256)
 # parser for input images paths and names
-parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='../input/font_contents/serif_sans/U/serif/LindenHill-Italic.png')
-parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='../input/font_contents/serif_sans/U/sans/LindenHill-Regular.png')
-parser.add_argument('--content_path', '-content_path', type=str, default='../input/font_contents/sanserifs/U/CabinCondensed-Regular.png')
+parser.add_argument('--serif_style_path', '-serif_style_path', type=str, default='Week1_22123_wB02_s01_ch1.tif')
+parser.add_argument('--nonserif_style_path', '-nonserif_style_path', type=str, default='Week1_22123_wB02_s01_ch1.tif')
+parser.add_argument('--content_path', '-content_path', type=str, default='Week1_22123_wB02_s01_ch1.tif')
 # parser for output path
-parser.add_argument('--output_path', '-output_path', type=str, default='../output_style_difference/direct/', help='Path to save output files')
+parser.add_argument('--output_path', '-output_path', type=str, default='./output', help='Path to save output files')
 # parser for cuda
 parser.add_argument('--cuda', '-cuda', type=str, default='cuda:0', help='cuda:0 or cuda:x')
 
@@ -90,7 +90,7 @@ output_path = output_path + content_name[:-4] + '_' + style_name1[:-4] + '_' + s
 
 # Get network
 vgg = VGG()
-vgg.load_state_dict(torch.load('../Models/vgg_conv.pth'))
+vgg.load_state_dict(torch.load('./vgg_conv.pth'))
 for param in vgg.parameters():
     param.requires_grad = False
 vgg.to(device)
@@ -222,9 +222,9 @@ while n_iter[0] <= max_iter:
         loss = sum(layer_losses)
 
         # for log
-        c_loss.append(content_loss)
-        s_loss.append(style_loss)
-        loss_list.append(loss)
+        c_loss.append(content_loss.item())
+        s_loss.append(style_loss.item())
+        loss_list.append(loss.item())
 
         # backward calculation
         loss.backward()
