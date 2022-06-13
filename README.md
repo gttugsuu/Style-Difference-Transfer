@@ -1,6 +1,6 @@
 ### !!!This is experimental repo. The code is so messy!!!
 
-### Download the pre-trained weights for VGG network from [here](https://drive.google.com/open?id=1iF4oKdb-5-45AAmGIwaJyMNcjI9xJZ2i), and place it on the main folder. (~500MB)
+### Download the pre-trained weights for VGG network from [here](https://drive.google.com/file/d/15cod-tqSo2CUrutAaC3HWAyITJw9R1Gf/view), and place it on the main folder. (~500MB)
 
 ### To run
 ```
